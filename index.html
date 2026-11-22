@@ -121,8 +121,8 @@ function draw1(){if(!mine()||G.drew>=2)return;const P=G.pl[G.t];if(G.drew==1){if
 function mk(){const d=[];['A','Am','C','Tm','Ta','Tv','VEM','Eg'].forEach(k=>{for(let i=rnd(9)+8;i>0;i--)d.push(k)});for(let i=d.length-1;i>0;i--){const j=rnd(i+1);[d[i],d[j]]=[d[j],d[i]]}return d}
 const CN={CM:'Ciudad Mala',CA:'Ciudad Avanzada',Cv:'Ciudad Verde',Cg:'Ciudad Grupal'};
 function boom(t,c){const d=document.createElement('div');d.className='ov bm '+(c||'');d.innerHTML='<h1>'+t+'</h1>';document.body.appendChild(d);setTimeout(()=>d.remove(),2000)}
-function draw(P){if(!G.rt&&(G.turn>=19||rnd(20)==0)){G.rt={from:G.t,to:null};lg(`¡Aparece la Ratita! (${G.nm[G.t]})`);giveRt()}if(!G.deck.length)G.deck=mk();const k=G.deck.pop();if(k=='C'){if(P.civ<20)P.civ++}else if(P.tech[k]!=null)P.tech[k]++;else if(k=='VEM'&&!P.v)P.v=newV();else P.hand.push(k);lg(`${G.nm[G.t]} roba una carta`)}
-function start(p){G.t=p;G.turn++;G.dice=null;G.acted=0;M=null;const P=G.pl[p];P.m++;G.drew=0;G.mines=G.mines.filter(m=>{if(m.o!=p)return true;m.c.mk=0;if(G.pl[m.pi].c.includes(m.c)){lg(`La mina de ${G.nm[p]} explota en una ciudad de ${G.nm[m.pi]}`);hurt(m.pi,m.c,2)}return false});if(P.v&&P.v.mine){if(P.m>=1)P.m--;else{P.v.mine=0;lg(`La mina de ${G.nm[p]} se desactiva: sin T$`)}}if(!G.rt&&G.turn>=19){G.rt={from:p,to:null};lg(`¡Aparece la Ratita! (${G.nm[p]})`)}if(G.rt&&G.rt.to==null&&p==G.rt.from)giveRt();
+function draw(P){if(!G.rt&&(G.turn>=19||rnd(20)==0)){G.rt={from:G.t,to:null};lg(`¡Aparece la Ratita! (${G.nm[G.t]})`);giveRt();return}if(!G.deck.length)G.deck=mk();const k=G.deck.pop();if(k=='C'){if(P.civ<20)P.civ++}else if(P.tech[k]!=null)P.tech[k]++;else if(k=='VEM'&&!P.v)P.v=newV();else P.hand.push(k);lg(`${G.nm[G.t]} roba una carta`)}
+function start(p){G.t=p;G.turn++;G.dice=null;G.acted=0;M=null;const P=G.pl[p];P.m++;G.drew=0;G.mines=G.mines.filter(m=>{if(m.o!=p)return true;m.c.mk=0;if(G.pl[m.pi].c.includes(m.c)){lg(`La mina de ${G.nm[p]} explota en una ciudad de ${G.nm[m.pi]}`);hurt(m.pi,m.c,2)}return false});if(P.v&&P.v.mine){if(P.m>=1)P.m--;else{P.v.mine=0;lg(`La mina de ${G.nm[p]} se desactiva: sin T$`)}}if(G.rt&&G.rt.to==null&&p==G.rt.from)giveRt();
 P.c=P.c.filter(c=>{if(c.k=='CM'&&--c.tm<=0){lg(`${G.nm[p]}: una CM desapareció`);return false}return true});
 lg(`Turno de ${G.nm[p]}: +1 T$`);
 
@@ -223,7 +223,7 @@ else if(a=='x')M=null;
 render()}
 function city(c,i,pi,own){let k=c.k;if(k=='CM'&&!own)k='CA';const s=own?'m':'e';
 return `<div class="c k${k} ${c.sh?'ev':''} ${c.eg?'eg':''} ${c.mk?'mk':''} ${M&&((M.t=='atk'&&s=='e'&&k)||(M.t!='atk'&&s=='m'&&k))?'t':''}" onclick="ck(${pi},${i})" ondblclick="dbl(${pi},${i})" data-k="${k}">${k?`<img src="${IMG[k]}"><i>${c.inf?"∞":c.hp+"V"}</i>`:'<b>—</b>'}${M&&M.t=='atk'&&s=='e'&&k?`<small class=at>Atacar ${CN[k]}</small>`:''}${k=='CM'&&own?`<small>${c.tm} turnos</small>`:''}${c.sh?`<small>Ev ${c.sh}D</small>`:''}</div>`}
-function render(){if(!G)return menu();const v=G.ai?0:G.t,me=G.pl[v],en=G.pl[1-v],ok=mine(),d=ok?'':'disabled';
+function render(){if(!G)return menu();const v=G.ai?0:((typeof TFA_MP!=='undefined'&&TFA_MP&&TFA_MP.phase==='playing')?TFA_MP.index:G.t),me=G.pl[v],en=G.pl[1-v],ok=mine(),d=ok?'':'disabled';
 let h=G.pl.map((p,j)=>j==v?'':`<div class=pn${G.t==j?' style="border-color:#ffb300"':''}><b>${G.nm[j]}</b>${G.rt&&G.rt.to!=null?' · '+ro(j):''} · T$ ${p.m} · C ${p.civ} · cartas ${p.hand.length}${p.c.length?'':' · ELIMINADO'}</div><div class=cs>${grid(j,0)}${p.v?vcell(p.v,j,0):''}</div>`).join('');
 if(G.cg)h+=cgp();
 h+=`<div class=pn><b>${G.over!=null?'Fin':G.t==v?'▶ TURNO DE '+G.nm[G.t]:'Turno del rival'}</b><b>📜 Registro de batalla</b> <small>(doble clic para ver todo)</small><div id=log ondblclick="logFull()" style="touch-action:manipulation">${G.log.slice(0,2).map(x=>x.replace(/^(T[0-9]+)/,'<b style="color:#ffb300">$1</b>')).join('<br>')}</div></div>`;
@@ -450,12 +450,12 @@ async function tfaStartGame(){
   }catch(e){const x=E('tfaLobbyMsg');if(x)x.textContent="No se pudo iniciar: "+tfaErr(e)}
 }
 function tfaPackGame(){
-  const snap=JSON.parse(JSON.stringify(G));
+  const snap=JSON.parse(JSON.stringify(G));snap.gh=[];
   snap.mines=(G.mines||[]).map(m=>({o:m.o,pi:m.pi,ci:G.pl[m.pi]?.c.indexOf(m.c)??-1}));
   return snap;
 }
 function tfaUnpackGame(snap){
-  const g=JSON.parse(JSON.stringify(snap));
+  const g=JSON.parse(JSON.stringify(snap));g.gh=[];
   g.mines=(g.mines||[]).map(m=>({o:m.o,pi:m.pi,c:g.pl[m.pi]?.c[m.ci]})).filter(m=>m.c);
   return g;
 }
